@@ -78,11 +78,46 @@ class ConditionsVC: UIViewController, UITableViewDataSource {
   }
 
   private func requestSeriallySC() {
-    // TODO
+      Task {
+          startTiming()
+
+          for region in Region.regions {
+              let conditions = await ConditionsRequester.getConditionsSC(latitude: region.latitude, longitude: region.longitude)
+              conditionsDict[region.capital] = conditions
+          }
+
+          endTiming()
+      }
   }
 
   private func requestInParallelSC() {
-    // TODO
+      Task {
+          startTiming()
+
+          let regionConditions = await withTaskGroup(of: (Region, String).self, returning: [String: String].self) { (taskGroup) in
+              for region in Region.regions {
+                  taskGroup.addTask {
+                      print("Getting conditions for \(region.capital)")
+                      let conditions = await ConditionsRequester.getConditionsSC(latitude: region.latitude, longitude: region.longitude)
+                      print("Got conditions for \(region.capital)")
+                      return (region, conditions)
+                  }
+              }
+
+              var results: [String: String] = [:]
+
+              for await regionCondition in taskGroup {
+                  results[regionCondition.0.capital] = regionCondition.1
+              }
+
+              return results
+          }
+
+          self.conditionsDict = regionConditions
+
+          // By default, tasks are run on the same thread they were started from.
+          endTiming()
+      }
   }
 
   private func startTiming() {
