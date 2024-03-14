@@ -57,7 +57,24 @@ class ConditionsVC: UIViewController, UITableViewDataSource {
   }
 
   private func requestInParallelGCD() {
-    // TODO
+      startTiming()
+      let group = DispatchGroup()
+
+      for region in Region.regions {
+          group.enter()
+          ConditionsRequester.getConditionsClassic(
+            latitude: region.latitude,
+            longitude: region.latitude,
+            completion: { conditions in
+                self.conditionsDict[region.capital] = conditions
+                group.leave()
+            }
+          )
+      }
+
+      group.notify(queue: .main) {
+          self.endTiming()
+      }
   }
 
   private func requestSeriallySC() {

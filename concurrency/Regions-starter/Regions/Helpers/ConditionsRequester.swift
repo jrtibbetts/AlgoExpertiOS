@@ -14,19 +14,21 @@ enum ConditionsRequester {
 
     let request = URLRequest(url: urlFromCoordinates(latitude: latitude, longitude: longitude))
     URLSession.shared.dataTask(with: request) { data, _, error in
-      let decoder = JSONDecoder()
-      decoder.keyDecodingStrategy = .convertFromSnakeCase
-
-      guard
-        error == nil,
-        let data = data,
-        let response = try? decoder.decode(WeatherResponse.self, from: data)
-      else {
-        completion(genericErrorMessage)
-        return
-      }
-
-      completion(conditionsFromTempAndWeathers(response.tempAndWeathers))
+        DispatchQueue.main.async {
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            
+            guard
+                error == nil,
+                let data = data,
+                let response = try? decoder.decode(WeatherResponse.self, from: data)
+            else {
+                completion(genericErrorMessage)
+                return
+            }
+            
+            completion(conditionsFromTempAndWeathers(response.tempAndWeathers))
+        }
     }.resume()
   }
 
